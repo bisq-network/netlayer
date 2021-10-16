@@ -23,7 +23,16 @@
         <dependency>
             <groupId>com.github.JesusMcCloud</groupId>
             <artifactId>jtorctl</artifactId>
-            <version>1.5</version>
+            <!--
+                Recently the v1.5 build of the artefact went missing from jitpack:
+                https://jitpack.io/com/github/JesusMcCloud/jtorctl/1.5/build.log
+
+                We now reference the commit ID of the 1.5 version of the artefact
+                https://github.com/JesusMcCloud/jtorctl/releases/tag/1.5
+                which results in a separate jitpack build of the same dep. (equivalent to re-building the dependency)
+                https://jitpack.io/com/github/JesusMcCloud/jtorctl/9b5ba2036b/build.log
+             -->
+            <version>9b5ba2036b</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

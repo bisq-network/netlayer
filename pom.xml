@@ -41,7 +41,24 @@
         <dependency>
             <groupId>com.github.ravn</groupId>
             <artifactId>jsocks</artifactId>
-            <version>567e1cd</version>
+            <!--
+                Shorter version of the commit ID, to reference a separate jitpack artefact build for the same commit
+
+                Previously, the commit ID 567e1cd of the artefact was used here, which pointed to the jitpack build:
+                https://jitpack.io/com/github/ravn/jsocks/567e1cd/build.log
+
+                However, that specific build is now missing on jitpack, even though nothing changed in the reference git repo:
+                https://github.com/ravn/jsocks
+                (last commit is still 567e1cd)
+
+                Using a shorter version of the same commit ID tricks jitpack into thinking its a new build:
+                https://jitpack.io/com/github/ravn/jsocks/567e1/build.log
+                (jitpack build triggered on 18.05.2021)
+                (looks like someone else used this workaround already in May to re-trigger the build in jitpack)
+
+                So, by using a shorter version of the dependency commit ID, we work around the missing version of the artefact on jitpack
+             -->
+            <version>567e1</version>
         </dependency>
         <dependency>
             <groupId>io.github.microutils</groupId>

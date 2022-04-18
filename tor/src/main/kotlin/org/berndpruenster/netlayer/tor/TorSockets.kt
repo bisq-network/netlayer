@@ -190,7 +190,7 @@ class HiddenServiceSocket @JvmOverloads constructor(internalPort: Int,
         val (name, handler) = mgr.publishHiddenService(hiddenServiceDir, hiddenServicePort, internalPort)
         serviceName = name
         socketAddress = HiddenServiceSocketAddress(name, hiddenServicePort)
-        bind(InetSocketAddress(LOCAL_IP, internalPort))
+        bind(InetSocketAddress(LISTEN_IP, internalPort))
         handler.attachReadyListeners(this, listeners)
     }
 

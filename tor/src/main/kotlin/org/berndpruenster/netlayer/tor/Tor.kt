@@ -52,6 +52,7 @@ import java.security.MessageDigest
 
 
 const val LOCAL_IP = "127.0.0.1"
+const val LISTEN_IP = "0.0.0.0"
 private const val LOCAL_ADDR_FRAGMENT = "\"" + LOCAL_IP + ":"
 private const val NET_LISTENERS_SOCKS = "net/listeners/socks"
 

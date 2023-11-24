@@ -79,8 +79,8 @@ class Torrc @Throws(IOException::class) internal constructor(defaults: InputStre
     private val rc = LinkedHashMap<String, String>()
 
     init {
-        overrides?.forEach { rc.put(it.key, it.value.trim()) }
         parse(defaults)?.forEach { rc.put(it.key, it.value.trim()) }
+        overrides?.forEach { rc.put(it.key, it.value.trim()) }
     }
 
     internal val inputStream: InputStream
@@ -130,29 +130,36 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
         private val EVENTS = listOf("CIRC", "WARN", "ERR")
 
         private fun parseBootstrap(inputStream: InputStream, latch: CountDownLatch, port: AtomicReference<Int>) {
-            Thread({
-                       Thread.currentThread().name = "NFO"
-                       BufferedReader(inputStream.reader()).use { reader ->
-                           reader.forEachLine {
-                               logger?.debug { it }
-                               if (it.contains("Control listener listening on port ")) {
-                                   port.set(Integer.parseInt(it.substring(it.lastIndexOf(" ") + 1, it.length - 1)))
-                                   latch.countDown()
-                               }
-                           }
-                       }
-                   }).start()
+            Thread {
+                Thread.currentThread().name = "NFO"
+                BufferedReader(inputStream.reader()).use { reader ->
+                    reader.forEachLine {
+                        logger?.debug { it }
+                        if (latch.count > 0L) {
+                            if (it.contains("Control listener listening on port ")) {
+                                // Automatic port
+                                port.set(Integer.parseInt(it.substring(it.lastIndexOf(" ") + 1, it.length - 1)))
+                                latch.countDown()
+                            } else if (it.contains("Opened Control listener connection")) {
+                                // Manual port
+                                port.set(Integer.parseInt(it.substring(it.lastIndexOf(":") + 1, it.length).trim()))
+                                latch.countDown()
+                            }
+                        }
+                    }
+                }
+            }.start()
         }
 
         private fun forwardErr(inputStream: InputStream) {
-            Thread({
-                       Thread.currentThread().name = "ERR"
-                       BufferedReader(inputStream.reader()).use { reader ->
-                           reader.forEachLine {
-                               logger?.error { it }
-                           }
-                       }
-                   }).start()
+            Thread {
+                Thread.currentThread().name = "ERR"
+                BufferedReader(inputStream.reader()).use { reader ->
+                    reader.forEachLine {
+                        logger?.error { it }
+                    }
+                }
+            }.start()
         }
     }
 

@@ -96,6 +96,8 @@ class Torrc @Throws(IOException::class) internal constructor(defaults: InputStre
             return ByteArrayInputStream(outputStream.toByteArray())
         }
 
+    internal val runAsDaemon = rc.getOrDefault("RunAsDaemon", "0").toBoolean()
+
     companion object {
         @Throws(IOException::class)
         private fun parse(src: InputStream?): LinkedHashMap<String, String>? {
@@ -168,6 +170,7 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
     internal val torrcFile = File(workingDirectory, FILE_TORRC)
     internal val torExecutableFile get() = File(workingDirectory, torExecutableFileName)
     internal val cookieFile = File(workingDirectory, FILE_AUTH_COOKIE)
+    private var runAsDaemon: Boolean = false
 
     @Throws(IOException::class)
     open fun installFiles() {
@@ -219,8 +222,11 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
         getByName(FILE_TORRC).use { str ->
             Torrc(str, overrides).inputStream.use { rc ->
                 getByName(FILE_TORRC_DEFAULTS).use {
-                    Torrc(rc, it).inputStream.use {
-                        cleanInstallFile(it, torrcFile)
+                    runAsDaemon = with(Torrc(rc, it)) {
+                        this.inputStream.use {
+                            cleanInstallFile(it, torrcFile)
+                        }
+                        this.runAsDaemon
                     }
                 }
             }
@@ -347,7 +353,7 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
             // This does create a condition where the process has exited due to
             // a problem but we should hopefully
             // detect that when we try to use the control connection.
-            if (OsType.current != OsType.WIN) {
+            if (OsType.current != OsType.WIN && runAsDaemon) {
                 val exit = torProcess.waitFor()
                 torProcess = null
                 if (exit != 0) {

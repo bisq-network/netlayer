@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.github.bisq-network.netlayer</groupId>
         <artifactId>parent</artifactId>
-        <version>0.7.6</version>
+        <version>0.7.7</version>
     </parent>
 
     <artifactId>tor.native</artifactId>

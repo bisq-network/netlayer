@@ -1,8 +1,2 @@
-## fteproxy configuration
-ClientTransportPlugin fte exec PluggableTransports\fteproxy --managed
-
-## lyrebird configuration
-ClientTransportPlugin obfs4,webtunnel exec PluggableTransports\lyrebird
-
-## meek configuration
-ClientTransportPlugin meek exec PluggableTransports\terminateprocess-buffer PluggableTransports\meek-client
+## lyrebird configuration (obfs4 + webtunnel)
+ClientTransportPlugin obfs4,webtunnel exec pluggable_transports\lyrebird.exe

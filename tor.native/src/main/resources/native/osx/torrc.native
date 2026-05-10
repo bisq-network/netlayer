@@ -1,5 +1,2 @@
-## lyrebird configuration
-ClientTransportPlugin obfs4,webtunnel exec PluggableTransports/lyrebird
-
-## meek configuration
-ClientTransportPlugin meek exec PluggableTransports/meek-client
+## lyrebird configuration (obfs4 + webtunnel)
+ClientTransportPlugin obfs4,webtunnel exec pluggable_transports/lyrebird

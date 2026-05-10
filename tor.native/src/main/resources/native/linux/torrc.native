@@ -2,7 +2,7 @@
 ClientTransportPlugin fte exec ./PluggableTransports/fteproxy.bin --managed
 
 ## lyrebird configuration
-ClientTransportPlugin obfs4 exec ./PluggableTransports/lyrebird
+ClientTransportPlugin obfs4,webtunnel exec ./PluggableTransports/lyrebird
 
 ## meek configuration
 ClientTransportPlugin meek exec ./PluggableTransports/meek-client

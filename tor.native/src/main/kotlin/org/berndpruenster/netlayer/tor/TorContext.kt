@@ -36,6 +36,9 @@ package org.berndpruenster.netlayer.tor
 import net.freehaven.tor.control.TorControlConnection
 import java.io.*
 import java.net.Socket
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -62,6 +65,13 @@ private const val DIRECTIVE_COOKIE_AUTH_FILE = "CookieAuthFile "
 private const val OWNER = "__OwningControllerProcess"
 private const val COOKIE_TIMEOUT = 10 * 1000                                        // Milliseconds
 private val LINE_BREAKS = charArrayOf('\r', '\n')
+private val OWNER_ONLY_DIRECTORY_PERMISSIONS = setOf(
+        PosixFilePermission.OWNER_READ,
+        PosixFilePermission.OWNER_WRITE,
+        PosixFilePermission.OWNER_EXECUTE)
+private val OWNER_ONLY_FILE_PERMISSIONS = setOf(
+        PosixFilePermission.OWNER_READ,
+        PosixFilePermission.OWNER_WRITE)
 
 
 
@@ -340,10 +350,9 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
         if (!cookieFile.parentFile.exists() && !cookieFile.parentFile.mkdirs()) {
             throw  RuntimeException("Could not create cookieFile parent directory")
         }
+        restrictDirectoryToOwner(cookieFile.parentFile)
 
-        if (!cookieFile.exists() && !cookieFile.createNewFile()) {
-            throw  RuntimeException("Could not create cookieFile")
-        }
+        createOwnerOnlyFile(cookieFile)
 
         val workingDirectory = workingDirectory
         // Watch for the auth cookie file being created/updated
@@ -410,6 +419,7 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
                 }
             }
             ctrlCon.authenticate(cookie)
+            restrictFileToOwner(cookieFile)
             // Tell Tor to exit when the control connection is closed
             ctrlCon.takeOwnership()
             ctrlCon.resetConf(listOf(OWNER))
@@ -468,5 +478,50 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
                 confWriter.println(it.trim())
             }
         }
+    }
+}
+
+@Throws(IOException::class)
+private fun createOwnerOnlyFile(file: File) {
+    if (file.exists()) {
+        restrictFileToOwner(file)
+        return
+    }
+    if (OsType.current.isUnixoid()) {
+        Files.createFile(file.toPath(), PosixFilePermissions.asFileAttribute(OWNER_ONLY_FILE_PERMISSIONS))
+    } else if (!file.createNewFile()) {
+        throw IOException("Could not create file $file")
+    }
+    restrictFileToOwner(file)
+}
+
+@Throws(IOException::class)
+private fun restrictFileToOwner(file: File) {
+    if (OsType.current.isUnixoid()) {
+        Files.setPosixFilePermissions(file.toPath(), OWNER_ONLY_FILE_PERMISSIONS)
+        return
+    }
+    if (!file.setReadable(false, false)
+            || !file.setWritable(false, false)
+            || !file.setExecutable(false, false)
+            || !file.setReadable(true, true)
+            || !file.setWritable(true, true)) {
+        throw IOException("Could not restrict permissions for $file")
+    }
+}
+
+@Throws(IOException::class)
+private fun restrictDirectoryToOwner(directory: File) {
+    if (OsType.current.isUnixoid()) {
+        Files.setPosixFilePermissions(directory.toPath(), OWNER_ONLY_DIRECTORY_PERMISSIONS)
+        return
+    }
+    if (!directory.setReadable(false, false)
+            || !directory.setWritable(false, false)
+            || !directory.setExecutable(false, false)
+            || !directory.setReadable(true, true)
+            || !directory.setWritable(true, true)
+            || !directory.setExecutable(true, true)) {
+        throw IOException("Could not restrict permissions for $directory")
     }
 }

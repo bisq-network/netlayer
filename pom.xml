@@ -18,7 +18,7 @@
         <!-- Maven plugins -->
         <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
         <!-- Tor browser version 15.0.13 with tor binary version 0.4.9.8 -->
-        <tor-binary.version>41ba59a37a08522007ae96f8293b388e12d468d1</tor-binary.version>
+        <tor-binary.version>7358b044704548b70cf8db4e2dacbe1ff4aa2171</tor-binary.version>
     </properties>
 
     <modules>
@@ -43,8 +43,8 @@
         <dependency>
             <groupId>com.github.bisq-network</groupId>
             <artifactId>jsocks</artifactId>
-            <!-- v0.0.2 -->
-            <version>43b004b5bcc468fb1213767853e1d8a54fd4a359</version>
+            <!-- v0.0.3 -->
+            <version>8bfc68c58d443b0ea03a8e8ec352e120fd020127</version>
         </dependency>
         <dependency>
             <groupId>io.github.microutils</groupId>

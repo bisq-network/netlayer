@@ -23,8 +23,8 @@
         <dependency>
             <groupId>com.github.bisq-network</groupId>
             <artifactId>jtorctl</artifactId>
-            <!-- v1.5 -->
-            <version>b2a172f44edcd8deaa5ed75d936dcbb007f0d774</version>
+            <!-- v1.6 -->
+            <version>4a1a7ebc4ddd2b79b490ea2b03e16a7ad3f33061</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

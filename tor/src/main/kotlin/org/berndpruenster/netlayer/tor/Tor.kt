@@ -82,7 +82,7 @@ class TraceStream(logger : KLogger) : PrintWriter(Stream(logger), true) {
             if(!logger.isTraceEnabled()) return
             synchronized(logger) {
                 var message = String(cbuf.copyOfRange(off, off + len))
-                message.filterNot { it -> it == '\r' }
+                message = message.filterNot { it -> it == '\r' }
                 message.split(Regex("\\n", RegexOption.MULTILINE)).forEach {
                     if(it.isNotEmpty()) logger.trace { it }
                 }

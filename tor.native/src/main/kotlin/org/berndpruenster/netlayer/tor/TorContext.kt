@@ -304,7 +304,7 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
 
         installAndConfigureFiles(bridgeConfig)
 
-        logger?.info("Starting Tor")
+        logger?.info { "Starting Tor" }
         val cookieFile = cookieFile
         if (!cookieFile.parentFile.exists() && !cookieFile.parentFile.mkdirs()) {
             throw  RuntimeException("Could not create cookieFile parent directory")

@@ -35,8 +35,8 @@ various open source licenses (www.opensource.org).
 package org.berndpruenster.netlayer.tor
 
 import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy
-import mu.KLogger
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KLogger
+import io.github.oshai.kotlinlogging.KotlinLogging
 import net.freehaven.tor.control.ConfigEntry
 import net.freehaven.tor.control.TorControlConnection
 import java.io.*
@@ -79,12 +79,12 @@ class TraceStream(logger : KLogger) : PrintWriter(Stream(logger), true) {
         }
 
         override fun write(cbuf: ByteArray, off: Int, len: Int) {
-            if(!logger.isTraceEnabled) return
+            if(!logger.isTraceEnabled()) return
             synchronized(logger) {
                 var message = String(cbuf.copyOfRange(off, off + len))
                 message.filterNot { it -> it == '\r' }
                 message.split(Regex("\\n", RegexOption.MULTILINE)).forEach {
-                    if(it.isNotEmpty()) logger.trace(it)
+                    if(it.isNotEmpty()) logger.trace { it }
                 }
                 flush()
             }
@@ -109,7 +109,7 @@ class TorController : TorControlConnection {
 
     fun shutdown() {
         socket.use {
-            logger?.debug("Stopping Tor")
+            logger?.debug { "Stopping Tor" }
             setConf(DISABLE_NETWORK, "1")
             shutdownTor("TERM")
         }
@@ -134,9 +134,10 @@ class Control(private val con: TorController) {
 
     internal var running = true
         private set
+    private val shutdownLock = Any()
 
     fun shutdown() {
-        synchronized(running) {
+        synchronized(shutdownLock) {
             if (!running) return
             running = false
             con.shutdown()
@@ -215,7 +216,7 @@ abstract class Tor @Throws(TorCtlException::class) protected constructor() {
                 hash = authValue.toByteArray()
 
                 proxy.setAuthenticationMethod(2, { _, proxySocket ->
-                    logger?.debug("using Stream $authValue")
+                    logger?.debug { "using Stream $authValue" }
 
                     val out = proxySocket.getOutputStream()
                     out.write(byteArrayOf(1.toByte(), hash.size.toByte()))
@@ -292,7 +293,7 @@ abstract class Tor @Throws(TorCtlException::class) protected constructor() {
                     Files.setPosixFilePermissions(hostnameFile.parentFile.toPath(), perms)
                 }
             } catch (e: Exception) {
-                logger?.error("could not set permissions, hidden service $hsDirName will most probably not work", e)
+                logger?.error(e) { "could not set permissions, hidden service $hsDirName will most probably not work" }
             }
 
             hostnameFile.appendText(result.serviceID + ".onion")

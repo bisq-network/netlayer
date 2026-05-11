@@ -1,8 +1,9 @@
-## fteproxy configuration
-ClientTransportPlugin fte exec PluggableTransports\fteproxy --managed
+## lyrebird configuration
+# Intentionally exclude legacy lyrebird transports: obfs2, obfs3, and scramblesuit
+# are deprecated and superseded by obfs4; meek_lite is not exposed because this
+# bundle no longer ships the legacy meek-client used by older torrc configs.
+ClientTransportPlugin obfs4,webtunnel exec pluggable_transports\lyrebird.exe
+ClientTransportPlugin snowflake exec pluggable_transports\lyrebird.exe
 
-## obfs4proxy configuration
-ClientTransportPlugin obfs2,obfs3,obfs4,scramblesuit exec PluggableTransports\obfs4proxy
-
-## meek configuration
-ClientTransportPlugin meek exec PluggableTransports\terminateprocess-buffer PluggableTransports\meek-client
+## conjure configuration
+ClientTransportPlugin conjure exec pluggable_transports\conjure-client.exe -registerURL https://registration.refraction.network/api

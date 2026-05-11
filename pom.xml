@@ -5,7 +5,7 @@
 
     <groupId>com.github.bisq-network.netlayer</groupId>
     <artifactId>parent</artifactId>
-    <version>0.7.6</version>
+    <version>0.7.7</version>
     <packaging>pom</packaging>
 
     <name>Netlayer</name>
@@ -17,8 +17,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Maven plugins -->
         <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
-        <!-- Tor browser version 11.5.2; tor binary version: 0.4.7.10-->
-        <tor-binary.version>580d31bdcf1fabccd38456aa084044064d89d5c1</tor-binary.version>
+        <!-- Tor browser version 15.0.13 with tor binary version 0.4.9.8 -->
+        <tor-binary.version>41ba59a37a08522007ae96f8293b388e12d468d1</tor-binary.version>
     </properties>
 
     <modules>

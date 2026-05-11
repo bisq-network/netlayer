@@ -36,6 +36,9 @@ package org.berndpruenster.netlayer.tor
 import net.freehaven.tor.control.TorControlConnection
 import java.io.*
 import java.net.Socket
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -61,6 +64,14 @@ private const val DIRECTIVE_COOKIE_AUTH_FILE = "CookieAuthFile "
 
 private const val OWNER = "__OwningControllerProcess"
 private const val COOKIE_TIMEOUT = 10 * 1000                                        // Milliseconds
+private val LINE_BREAKS = charArrayOf('\r', '\n')
+private val OWNER_ONLY_DIRECTORY_PERMISSIONS = setOf(
+        PosixFilePermission.OWNER_READ,
+        PosixFilePermission.OWNER_WRITE,
+        PosixFilePermission.OWNER_EXECUTE)
+private val OWNER_ONLY_FILE_PERMISSIONS = setOf(
+        PosixFilePermission.OWNER_READ,
+        PosixFilePermission.OWNER_WRITE)
 
 
 
@@ -79,8 +90,8 @@ class Torrc @Throws(IOException::class) internal constructor(defaults: InputStre
     private val rc = LinkedHashMap<String, String>()
 
     init {
-        overrides?.forEach { rc.put(it.key, it.value.trim()) }
-        parse(defaults)?.forEach { rc.put(it.key, it.value.trim()) }
+        parse(defaults)?.forEach { rc.put(sanitizeKey(it.key), sanitizeValue(it.value)) }
+        overrides?.forEach { rc.put(sanitizeKey(it.key), sanitizeValue(it.value)) }
     }
 
     internal val inputStream: InputStream
@@ -97,6 +108,22 @@ class Torrc @Throws(IOException::class) internal constructor(defaults: InputStre
         }
 
     companion object {
+        private fun sanitizeKey(key: String): String {
+            val sanitized = key.trim()
+            require(sanitized.isNotEmpty() && sanitized.none { it.isWhitespace() }) {
+                "Invalid torrc directive key: $key"
+            }
+            return sanitized
+        }
+
+        private fun sanitizeValue(value: String): String {
+            val sanitized = value.trim()
+            require(sanitized.indexOfAny(LINE_BREAKS) < 0) {
+                "torrc directive values must be single-line"
+            }
+            return sanitized
+        }
+
         @Throws(IOException::class)
         private fun parse(src: InputStream?): LinkedHashMap<String, String>? {
             if (src == null) return null
@@ -182,13 +209,18 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
 
             // getRuntime: Returns the runtime object associated with the current Java application.
             // exec: Executes the specified string command in a separate process.
-            val p = Runtime.getRuntime().exec(if (OsType.current.isUnixoid()) "ps -few" else (System.getenv("windir") + "\\system32\\" + "tasklist.exe /fo csv /nh"))
+            val p = if (OsType.current.isUnixoid()) {
+                ProcessBuilder("ps", "-few").start()
+            } else {
+                val windowsDir = System.getenv("windir") ?: throw IOException("windir environment variable is not set")
+                ProcessBuilder(File(File(windowsDir, "system32"), "tasklist.exe").absolutePath, "/fo", "csv", "/nh").start()
+            }
             val allText = p.inputStream.bufferedReader().use(BufferedReader::readText)
             if (!allText.contains(torExecutableFile.absolutePath))
                 break
 
             if(2 == i && !OsType.current.isUnixoid())
-                Runtime.getRuntime().exec("TASKKILL /F /IM " + torExecutableFile.absolutePath)
+                ProcessBuilder("TASKKILL", "/F", "/IM", torExecutableFile.name).start()
 
             if(3 == i)
                 throw IOException("Our tor binary is still in use... giving up")
@@ -251,7 +283,7 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
         }
     }
 
-    internal fun getHostNameFile(hsDir: String): File = File(getHiddenServiceDirectory(hsDir).canonicalPath + "/" + FILE_HOSTNAME)
+    internal fun getHostNameFile(hsDir: String): File = File(getHiddenServiceDirectory(hsDir), FILE_HOSTNAME)
 
     internal fun deleteAllFilesButHS() {
         // It can take a little bit for the Tor OP to detect the connection is
@@ -283,7 +315,16 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
     abstract fun getByName(fileName: String): InputStream
 
     fun getHiddenServiceDirectory(hsDir: String): File {
-        return File(workingDirectory, "/$DIR_HS_ROOT/$hsDir")
+        require(hsDir.isNotBlank() && hsDir.indexOfAny(LINE_BREAKS) < 0) {
+            "Hidden service directory name must be a non-empty single line"
+        }
+
+        val hiddenServiceRoot = File(workingDirectory, DIR_HS_ROOT).canonicalFile
+        val hiddenServiceDirectory = File(hiddenServiceRoot, hsDir).canonicalFile
+        require(hiddenServiceDirectory.toPath().startsWith(hiddenServiceRoot.toPath()) && hiddenServiceDirectory != hiddenServiceRoot) {
+            "Hidden service directory must stay under $hiddenServiceRoot"
+        }
+        return hiddenServiceDirectory
     }
 
 
@@ -304,15 +345,14 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
 
         installAndConfigureFiles(bridgeConfig)
 
-        logger?.info("Starting Tor")
+        logger?.info { "Starting Tor" }
         val cookieFile = cookieFile
         if (!cookieFile.parentFile.exists() && !cookieFile.parentFile.mkdirs()) {
             throw  RuntimeException("Could not create cookieFile parent directory")
         }
+        restrictDirectoryToOwner(cookieFile.parentFile)
 
-        if (!cookieFile.exists() && !cookieFile.createNewFile()) {
-            throw  RuntimeException("Could not create cookieFile")
-        }
+        createOwnerOnlyFile(cookieFile)
 
         val workingDirectory = workingDirectory
         // Watch for the auth cookie file being created/updated
@@ -379,6 +419,7 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
                 }
             }
             ctrlCon.authenticate(cookie)
+            restrictFileToOwner(cookieFile)
             // Tell Tor to exit when the control connection is closed
             ctrlCon.takeOwnership()
             ctrlCon.resetConf(listOf(OWNER))
@@ -430,9 +471,57 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
                 confWriter.println("UseBridges 1")
             }
             bridgeConfig.forEach {
+                if (it.indexOfAny(LINE_BREAKS) >= 0) {
+                    throw IOException("Bridge lines must be single-line")
+                }
                 confWriter.print("Bridge ")
-                confWriter.println(it)
+                confWriter.println(it.trim())
             }
         }
+    }
+}
+
+@Throws(IOException::class)
+private fun createOwnerOnlyFile(file: File) {
+    if (file.exists()) {
+        restrictFileToOwner(file)
+        return
+    }
+    if (OsType.current.isUnixoid()) {
+        Files.createFile(file.toPath(), PosixFilePermissions.asFileAttribute(OWNER_ONLY_FILE_PERMISSIONS))
+    } else if (!file.createNewFile()) {
+        throw IOException("Could not create file $file")
+    }
+    restrictFileToOwner(file)
+}
+
+@Throws(IOException::class)
+private fun restrictFileToOwner(file: File) {
+    if (OsType.current.isUnixoid()) {
+        Files.setPosixFilePermissions(file.toPath(), OWNER_ONLY_FILE_PERMISSIONS)
+        return
+    }
+    if (!file.setReadable(false, false)
+            || !file.setWritable(false, false)
+            || !file.setExecutable(false, false)
+            || !file.setReadable(true, true)
+            || !file.setWritable(true, true)) {
+        throw IOException("Could not restrict permissions for $file")
+    }
+}
+
+@Throws(IOException::class)
+private fun restrictDirectoryToOwner(directory: File) {
+    if (OsType.current.isUnixoid()) {
+        Files.setPosixFilePermissions(directory.toPath(), OWNER_ONLY_DIRECTORY_PERMISSIONS)
+        return
+    }
+    if (!directory.setReadable(false, false)
+            || !directory.setWritable(false, false)
+            || !directory.setExecutable(false, false)
+            || !directory.setReadable(true, true)
+            || !directory.setWritable(true, true)
+            || !directory.setExecutable(true, true)) {
+        throw IOException("Could not restrict permissions for $directory")
     }
 }

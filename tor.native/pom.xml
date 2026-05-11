@@ -40,20 +40,20 @@
             <version>${tor-binary.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.beust</groupId>
+            <groupId>org.jcommander</groupId>
             <artifactId>jcommander</artifactId>
-            <version>1.82</version>
+            <version>3.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.2.11</version>
+            <version>1.5.32</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
+            <artifactId>kotlin-test-junit</artifactId>
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
@@ -65,7 +65,7 @@
             <plugin>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <configuration>
-                    <jvmTarget>1.8</jvmTarget>
+                    <jvmTarget>${java.version}</jvmTarget>
                 </configuration>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <version>${kotlin.version}</version>
@@ -97,8 +97,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <release>${java.version}</release>
                 </configuration>
                 <executions>
                     <!-- Replacing default-compile as it is treated specially by maven -->
@@ -144,7 +143,7 @@
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>build-helper-maven-plugin</artifactId>
-              <version>3.0.0</version>
+              <version>3.6.1</version>
               <executions>
                 <execution>
                   <phase>generate-sources</phase>
@@ -162,7 +161,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.12.0</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>

@@ -24,7 +24,7 @@
             <groupId>com.github.bisq-network</groupId>
             <artifactId>jtorctl</artifactId>
             <!-- v1.6 -->
-            <version>4a1a7ebc4ddd2b79b490ea2b03e16a7ad3f33061</version>
+            <version>30db998d855ff351c6f74783ff386f15304e875a</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

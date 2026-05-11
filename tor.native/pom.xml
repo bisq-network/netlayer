@@ -174,4 +174,65 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>market-prices-test-app</id>
+            <properties>
+                <marketPricesTestApp.args></marketPricesTestApp.args>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.6.3</version>
+                        <executions>
+                            <execution>
+                                <id>run-market-prices-test-app</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <mainClass>org.berndpruenster.netlayer.tor.demo.MarketPricesHiddenServiceTestAppKt</mainClass>
+                                    <classpathScope>test</classpathScope>
+                                    <commandlineArgs>${marketPricesTestApp.args}</commandlineArgs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>peer-message-test-app</id>
+            <properties>
+                <peerMessageTestApp.args></peerMessageTestApp.args>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.6.3</version>
+                        <executions>
+                            <execution>
+                                <id>run-peer-message-test-app</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <mainClass>org.berndpruenster.netlayer.tor.demo.PeerHiddenServiceMessageTestAppKt</mainClass>
+                                    <classpathScope>test</classpathScope>
+                                    <commandlineArgs>${peerMessageTestApp.args}</commandlineArgs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>

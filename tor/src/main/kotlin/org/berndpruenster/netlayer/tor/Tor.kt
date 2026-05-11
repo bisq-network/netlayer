@@ -37,11 +37,11 @@ package org.berndpruenster.netlayer.tor
 import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
-import net.freehaven.tor.control.ConfigEntry
 import net.freehaven.tor.control.TorControlConnection
 import java.io.*
 import java.math.BigInteger
 import java.net.Socket
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission
 import java.security.MessageDigest
@@ -211,9 +211,9 @@ abstract class Tor @Throws(TorCtlException::class) protected constructor() {
             proxy.resolveAddrLocally(false)
             streamID?.let {
                 val hash: ByteArray
-                val authValue = BigInteger(MessageDigest.getInstance("SHA-256").digest(streamID.toByteArray())).toString(
+                val authValue = BigInteger(MessageDigest.getInstance("SHA-256").digest(streamID.toByteArray(StandardCharsets.UTF_8))).toString(
                         26)
-                hash = authValue.toByteArray()
+                hash = authValue.toByteArray(StandardCharsets.UTF_8)
 
                 proxy.setAuthenticationMethod(2, { _, proxySocket ->
                     logger?.debug { "using Stream $authValue" }

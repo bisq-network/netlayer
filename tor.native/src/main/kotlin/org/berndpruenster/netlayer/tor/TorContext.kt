@@ -314,15 +314,21 @@ abstract class TorContext @Throws(IOException::class) protected constructor(val 
 
     abstract fun getByName(fileName: String): InputStream
 
+    @Throws(IOException::class)
     fun getHiddenServiceDirectory(hsDir: String): File {
-        require(hsDir.isNotBlank() && hsDir.indexOfAny(LINE_BREAKS) < 0) {
-            "Hidden service directory name must be a non-empty single line"
+        val hiddenServiceRoot = File(workingDirectory, DIR_HS_ROOT).canonicalFile
+        if (hsDir.isEmpty()) {
+            // Bisq NewTor historically passes an empty hidden-service directory name.
+            // Keep that API contract by using the default hidden-service root itself.
+            return hiddenServiceRoot
+        }
+        if (hsDir.isBlank() || hsDir.indexOfAny(LINE_BREAKS) >= 0) {
+            throw IOException("Hidden service directory name must be empty or a non-blank single line")
         }
 
-        val hiddenServiceRoot = File(workingDirectory, DIR_HS_ROOT).canonicalFile
         val hiddenServiceDirectory = File(hiddenServiceRoot, hsDir).canonicalFile
-        require(hiddenServiceDirectory.toPath().startsWith(hiddenServiceRoot.toPath()) && hiddenServiceDirectory != hiddenServiceRoot) {
-            "Hidden service directory must stay under $hiddenServiceRoot"
+        if (!hiddenServiceDirectory.toPath().startsWith(hiddenServiceRoot.toPath()) || hiddenServiceDirectory == hiddenServiceRoot) {
+            throw IOException("Hidden service directory '$hsDir' must resolve below $hiddenServiceRoot")
         }
         return hiddenServiceDirectory
     }

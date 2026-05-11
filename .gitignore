@@ -20,6 +20,7 @@ hs_err_pid*
 .settings
 tor-demo
 tor-market-prices-demo
+tor-peer-message-demo
 /tor/target
 /tor.native/target
 /tor.external/target

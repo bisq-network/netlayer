@@ -250,6 +250,7 @@ abstract class Tor @Throws(TorCtlException::class) protected constructor() {
     @JvmOverloads
     fun getProxy(proxyHost: String, streamID: String? = null): Socks5Proxy = Tor.getProxy(proxyHost, control.proxyPort, streamID)
 
+    @Throws(IOException::class)
     abstract fun preprocessHsDirName(hsDirName: String) : File
 
     /**
@@ -267,7 +268,13 @@ abstract class Tor @Throws(TorCtlException::class) protected constructor() {
     @Throws(IOException::class, TorCtlException::class)
     fun publishHiddenService(hsDirName: String, hiddenServicePort: Int, localPort: Int): HsContainer {
 
-        val hiddenServiceDirectory = preprocessHsDirName(hsDirName)
+        val hiddenServiceDirectory = try {
+            preprocessHsDirName(hsDirName)
+        } catch (e: IOException) {
+            throw e
+        } catch (e: IllegalArgumentException) {
+            throw IOException("Invalid hidden service directory '$hsDirName'", e)
+        }
         val hostnameFile = File(hiddenServiceDirectory, FILE_HOSTNAME)
         val keyFile = File(hiddenServiceDirectory, FILE_PRIVATE_KEY)
         rejectSymbolicLink(hostnameFile)

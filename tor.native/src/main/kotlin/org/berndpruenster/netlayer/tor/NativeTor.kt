@@ -118,6 +118,7 @@ class NativeTor @JvmOverloads @Throws(TorCtlException::class) constructor(workin
         }
     }
 
+    @Throws(IOException::class)
     override fun preprocessHsDirName(hsDirName: String): File {
         return context.getHiddenServiceDirectory(hsDirName)
     }

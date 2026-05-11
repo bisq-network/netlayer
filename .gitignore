@@ -19,6 +19,7 @@ hs_err_pid*
 *.iml
 .settings
 tor-demo
+tor-market-prices-demo
 /tor/target
 /tor.native/target
 /tor.external/target

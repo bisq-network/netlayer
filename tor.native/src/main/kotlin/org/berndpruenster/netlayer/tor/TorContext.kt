@@ -80,8 +80,8 @@ class Torrc @Throws(IOException::class) internal constructor(defaults: InputStre
     private val rc = LinkedHashMap<String, String>()
 
     init {
-        overrides?.forEach { rc.put(sanitizeKey(it.key), sanitizeValue(it.value)) }
         parse(defaults)?.forEach { rc.put(sanitizeKey(it.key), sanitizeValue(it.value)) }
+        overrides?.forEach { rc.put(sanitizeKey(it.key), sanitizeValue(it.value)) }
     }
 
     internal val inputStream: InputStream

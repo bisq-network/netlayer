@@ -354,13 +354,7 @@ private fun restrictFileToOwner(file: File) {
         Files.setPosixFilePermissions(file.toPath(), OWNER_ONLY_FILE_PERMISSIONS)
         return
     }
-    if (!file.setReadable(false, false)
-            || !file.setWritable(false, false)
-            || !file.setExecutable(false, false)
-            || !file.setReadable(true, true)
-            || !file.setWritable(true, true)) {
-        throw IOException("Could not restrict permissions for $file")
-    }
+    restrictPermissionsBestEffort(file, executable = false)
 }
 
 @Throws(IOException::class)
@@ -369,12 +363,20 @@ private fun restrictDirectoryToOwner(directory: File) {
         Files.setPosixFilePermissions(directory.toPath(), OWNER_ONLY_DIRECTORY_PERMISSIONS)
         return
     }
-    if (!directory.setReadable(false, false)
-            || !directory.setWritable(false, false)
-            || !directory.setExecutable(false, false)
-            || !directory.setReadable(true, true)
-            || !directory.setWritable(true, true)
-            || !directory.setExecutable(true, true)) {
-        throw IOException("Could not restrict permissions for $directory")
+    restrictPermissionsBestEffort(directory, executable = true)
+}
+
+private fun restrictPermissionsBestEffort(file: File, executable: Boolean) {
+    val results = mutableListOf(
+            file.setReadable(false, false),
+            file.setWritable(false, false),
+            file.setExecutable(false, false),
+            file.setReadable(true, true),
+            file.setWritable(true, true))
+    if (executable) {
+        results.add(file.setExecutable(true, true))
+    }
+    if (!results.all { it }) {
+        logger?.debug { "Could not fully restrict permissions for $file on ${OsType.current}; continuing with filesystem defaults" }
     }
 }

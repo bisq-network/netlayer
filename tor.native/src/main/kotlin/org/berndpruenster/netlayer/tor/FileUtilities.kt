@@ -136,7 +136,7 @@ fun extractContentFromArchive(destinationDirectory: File, archiveInputStream: In
                     if ((mode and 65) > 0) {
                         f.setExecutable(true, (mode and 1) == 0)
                     }
-                    if (OsType.current == OsType.MACOS) {
+                    if (OsType.current.isMacOS()) {
                         f.setExecutable(true, true)
                     }
                 }
